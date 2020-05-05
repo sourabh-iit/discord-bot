@@ -12,7 +12,6 @@ import os
 
 token = os.environ.get("token")
 
-client = discord.Client()
 bot = commands.Bot(command_prefix='!')
 
 @bot.command()
