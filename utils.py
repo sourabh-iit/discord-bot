@@ -1,22 +1,32 @@
+import settings
+import requests
+import json
 
 
-def write_to_file(filename, data):
-  """Appends data to file. If file doesn't exist, then creates it"""
-  file_handler = open(filename, 'a+')
-  file_handler.write(data+'\n')
-  file_handler.close()
-
-def get_filename(author):
-  """Utility function to get file name"""
-  return f"{author.id}.txt"
+def save_in_db(author, data):
+    """Saves string data in db"""
+    url = f"{settings.ES_URL}/{author.id}/_doc"
+    requests.post(url, json={
+      "text": data
+    })
 
 
-def search_file(filename, query):
-  """Searches file for queries which contains the given query"""
-  results = []
-  file_handler = open(filename, 'r')
-  for res in file_handler.readlines():
-    if query in res:
-      results.append(res[:-1])
-  file_handler.close()
-  return results
+def search_in_db(author, data):
+    """Searches db for words in given query"""
+    url = f"{settings.ES_URL}/{author.id}/_search"
+    words = map(lambda x: f"*{x}*", filter(lambda x: len(x) > 0, data.split()))
+    query = " OR ".join(words)
+    res = requests.post(url, 
+      json.dumps({
+        "query": {
+          "query_string": {
+            "query": query
+          }
+        }
+      }),
+      headers = {"Content-type": "application/json", "Accept": "text/plain"}
+    )
+    if res.status_code==200:
+        return map(lambda x: x['_source']['text'], res.json()['hits']['hits'])
+
+    return []
