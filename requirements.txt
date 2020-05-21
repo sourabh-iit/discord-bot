@@ -1,3 +1,4 @@
 google
 requests
 discord.py
+requests_aws4auth
